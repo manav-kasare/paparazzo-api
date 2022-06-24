@@ -7,7 +7,7 @@ import {
   signout,
   update,
   verify,
-} from "../controllers/user";
+} from "../controllers/users";
 const router = Router();
 
 // post

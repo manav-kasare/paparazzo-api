@@ -39,6 +39,21 @@ export const removeRequest: IControllerArgs = async (req, res) => {
   }
 };
 
+export const requests: IControllerArgs = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const data = await FollowRequests.find({ to: userId }).limit(10);
+    return res.json({
+      data,
+      error: null,
+    });
+  } catch (error: any) {
+    return res
+      .status(400)
+      .json({ data: null, error: "Unexpected error occured" });
+  }
+};
+
 export const accept: IControllerArgs = async (req, res) => {
   try {
     const { id } = await req.params;
