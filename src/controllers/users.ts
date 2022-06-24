@@ -1,11 +1,14 @@
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import Following from "../models/following";
+import FollowRequests from "../models/followRequests";
+import FriendRequests from "../models/friendRequets";
+import Friends from "../models/friends";
 import User from "../models/user";
 import config from "../services/config";
-import { IControllerArgs } from "../types";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import otp from "../services/otp";
 import mail from "../services/mail";
-import Follow from "../models/follows";
+import otp from "../services/otp";
+import { IControllerArgs } from "../types";
 const { JWT_SECRET } = config;
 
 export const authenticate: IControllerArgs = async (req, res) => {
@@ -188,6 +191,64 @@ export const verify: IControllerArgs = async (req, res) => {
       });
     return res.json({
       data: user,
+      error: null,
+    });
+  } catch (error: any) {
+    console.log("Error verifying user", error);
+    return res
+      .status(400)
+      .json({ data: null, error: "Unexpected error occured" });
+  }
+};
+
+export const relations: IControllerArgs = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { remoteId } = req.query;
+
+    let isFollowing = false;
+    let followRequested = false;
+    let isFriend = false;
+    let friendRequested = false;
+
+    // Does follow
+    isFollowing = (await Following.findOne({
+      userId: id,
+      "user.id": remoteId,
+    }))
+      ? true
+      : false;
+
+    // Has follow requested
+    if (!isFollowing) {
+      followRequested = (await FollowRequests.findOne({
+        to: remoteId,
+      }))
+        ? true
+        : false;
+    }
+
+    // Is Friend
+    isFriend = (await Friends.findOne({
+      userId: id,
+      "user.id": remoteId,
+    }))
+      ? true
+      : false;
+
+    // Has friend requested
+    if (!isFriend) {
+      friendRequested = (await FriendRequests.findOne({
+        to: remoteId,
+      }))
+        ? true
+        : false;
+    }
+
+    const data = { isFollowing, isFriend, friendRequested, followRequested };
+
+    return res.json({
+      data,
       error: null,
     });
   } catch (error: any) {
