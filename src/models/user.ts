@@ -7,13 +7,11 @@ const user = new mongoose.Schema(
     password: { type: String, required: true },
     fcm: { type: String, required: true },
     avatar: { type: String, required: true },
-    tokens: [mongoose.Schema.Types.String],
+    token: { type: String, required: false },
     followers: { type: Number, required: true },
     following: { type: Number, required: true },
     friends: { type: Number, required: true },
     isPrivate: { type: Boolean, required: true },
-    verified: { type: Boolean, required: true },
-    verificationCode: { type: Number, required: false },
   },
   { timestamps: true }
 );

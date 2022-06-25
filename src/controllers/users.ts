@@ -13,21 +13,40 @@ const { JWT_SECRET } = config;
 
 export const authenticate: IControllerArgs = async (req, res) => {
   try {
+    const { email } = await req.body;
+    const user = await User.findOne({ email });
+    if (user) return await login(req, res);
+    const code = otp();
+    const response = await mail(email, code);
+    if (response.error)
+      return res.json({ data: null, error: "Could not send email" });
+    const data = { code, expiresIn: 900000 };
+    return res.json({ data, error: null });
+  } catch (error: any) {
+    console.log("Create user error", error);
+    if (error.name === "MongoServerError") {
+      if (error.code === 11000) {
+        if (error.keyPattern.email) return await login(req, res);
+        else if (error.keyPattern.username)
+          return res
+            .status(400)
+            .json({ data: null, error: "This username is already taken!" });
+      }
+    }
+    return res.status(400).json({ data: null, error });
+  }
+};
+
+export const signup: IControllerArgs = async (req, res) => {
+  try {
     const data = await req.body;
-    const _user = await User.findOne({ email: data.email });
-    if (_user) return await login(req, res);
     const user = new User(data);
     const token = jwt.sign(user.id, JWT_SECRET);
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    user.tokens = [token];
+    user.token = token;
     user.password = hashedPassword;
-    const code = otp();
-    user.verificationCode = code;
     await user.save();
-    const response = await mail(user.email, code);
-    if (response.error)
-      return res.json({ data: null, error: "Could not send email" });
-    return res.json({ data: user, error: null });
+    return res.json({ data: { user, token }, error: null });
   } catch (error: any) {
     console.log("Create user error", error);
     if (error.name === "MongoServerError") {
@@ -51,11 +70,13 @@ export const login: IControllerArgs = async (req, res) => {
     });
     if (!user)
       return res.json({ data: null, error: "No user found with this email" });
-    if (!user.verified) return res.json({ data: null, error: "Not verified" });
     const valid = await bcrypt.compare(data.password, user.password);
     if (!valid) return res.json({ data: null, error: "Incorrect Password" });
+    const token = jwt.sign(user.id, JWT_SECRET);
+    user.token = token;
+    await user.save();
     return res.json({
-      data: user,
+      data: { user, loggedIn: true, token },
       error: null,
     });
   } catch (error: any) {
@@ -106,6 +127,20 @@ export const getUser: IControllerArgs = async (req, res) => {
   }
 };
 
+export const getMe: IControllerArgs = async (req, res) => {
+  try {
+    const user = req.user;
+    return res.json({
+      data: user,
+      error: null,
+    });
+  } catch (error: any) {
+    return res
+      .status(400)
+      .json({ data: null, error: "Unexpected error occured" });
+  }
+};
+
 export const update: IControllerArgs = async (req, res) => {
   try {
     const body = await req.body;
@@ -130,18 +165,21 @@ export const update: IControllerArgs = async (req, res) => {
 
 export const signout: IControllerArgs = async (req, res) => {
   try {
-    const { id } = await req.params;
-    const { index } = await req.query;
-    const user = await User.findByIdAndUpdate(id, {
-      $pop: { tokens: index },
-    });
-    if (!user)
+    const user = req.user;
+    console.log("user", user);
+    if (!user) {
       return res.json({
         data: null,
         error: "No user found!",
       });
+    }
+    const token = req.token;
+    console.log("token", token);
+    await User.findByIdAndUpdate(user.id, {
+      $unset: { token: 1 },
+    });
     return res.json({
-      data: user,
+      data: "Success",
       error: null,
     });
   } catch (error: any) {

@@ -11,10 +11,11 @@ const auth: IControllerArgs = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findOne({
       _id: decoded,
-      tokens: { $in: token },
+      token,
     });
     if (!user) throw new Error();
     req.user = user;
+    req.token = token;
     next && next();
   } catch (error) {
     return res.status(401).send({ data: null, error: "Invalid token!" });
