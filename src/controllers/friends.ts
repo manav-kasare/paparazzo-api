@@ -4,8 +4,8 @@ import { IControllerArgs } from "../types";
 
 export const request: IControllerArgs = async (req, res) => {
   try {
-    const { me, remoteId } = await req.body;
-    await FriendRequests.create({ to: remoteId, from: me });
+    const { me, userId } = await req.body;
+    await FriendRequests.create({ to: userId, from: me });
     return res.json({
       data: "Success",
       error: null,
@@ -35,7 +35,7 @@ export const removeRequest: IControllerArgs = async (req, res) => {
 export const accept: IControllerArgs = async (req, res) => {
   try {
     const { id } = await req.params;
-    const user = await req.body;
+    const user = await req.user;
     const request = await FriendRequests.findByIdAndDelete(id);
     await Friends.create({
       ids: [request.from.id, user.id],

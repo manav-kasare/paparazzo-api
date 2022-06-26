@@ -21,7 +21,7 @@ router.post("/requests", auth, request);
 router.post("/requests/:id/accept", auth, accept);
 router.post("/requests/:id/reject", auth, reject);
 router.post("/requests/:id/remove", auth, removeRequest);
-router.post("/:id/unfollow", auth, unfollow);
+router.post("/unfollow", auth, unfollow);
 
 // get
 router.get("/followers", auth, followers);

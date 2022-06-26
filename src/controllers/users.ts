@@ -28,12 +28,15 @@ export const authenticate: IControllerArgs = async (req, res) => {
       if (error.code === 11000) {
         if (error.keyPattern.email) return await login(req, res);
         else if (error.keyPattern.username)
-          return res
-            .status(400)
-            .json({ data: null, error: "This username is already taken!" });
+          return res.json({
+            data: null,
+            error: "This username is already taken!",
+          });
       }
     }
-    return res.status(400).json({ data: null, error });
+    return res
+      .status(400)
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
@@ -51,14 +54,14 @@ export const signup: IControllerArgs = async (req, res) => {
     console.log("Create user error", error);
     if (error.name === "MongoServerError") {
       if (error.code === 11000) {
-        if (error.keyPattern.email) return await login(req, res);
-        else if (error.keyPattern.username)
-          return res
-            .status(400)
-            .json({ data: null, error: "This username is already taken!" });
+        if (error.keyPattern.username)
+          return res.json({
+            data: null,
+            error: "This username is already taken!",
+          });
       }
     }
-    return res.status(400).json({ data: null, error });
+    return res.json({ data: null, error });
   }
 };
 
@@ -82,7 +85,7 @@ export const login: IControllerArgs = async (req, res) => {
   } catch (error: any) {
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
@@ -92,8 +95,7 @@ export const search: IControllerArgs = async (req, res) => {
     if (!query) return res.json({ data: null, error: "Query cannot be empty" });
     const data = await User.find({
       username: { $regex: query, $options: "i" },
-      deactivated: false,
-    });
+    }).select("id username avatar");
     return res.json({
       data,
       error: null,
@@ -102,7 +104,7 @@ export const search: IControllerArgs = async (req, res) => {
     console.log("Error searching", error);
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
@@ -123,7 +125,7 @@ export const getUser: IControllerArgs = async (req, res) => {
     console.log("Error searching", error);
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
@@ -137,14 +139,14 @@ export const getMe: IControllerArgs = async (req, res) => {
   } catch (error: any) {
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
 export const update: IControllerArgs = async (req, res) => {
   try {
     const body = await req.body;
-    const { id } = await req.query;
+    const id = req.user.id;
     const user = await User.findByIdAndUpdate(id, body);
     if (!user)
       return res.json({
@@ -159,7 +161,7 @@ export const update: IControllerArgs = async (req, res) => {
     console.log("Error updating user", error);
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
@@ -186,7 +188,7 @@ export const signout: IControllerArgs = async (req, res) => {
     console.log("Error updating user", error);
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
@@ -211,7 +213,7 @@ export const resend: IControllerArgs = async (req, res) => {
     console.log("Error verifying code", error);
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
@@ -235,14 +237,14 @@ export const verify: IControllerArgs = async (req, res) => {
     console.log("Error verifying user", error);
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };
 
 export const relations: IControllerArgs = async (req, res) => {
   try {
     const { id } = req.user;
-    const { remoteId } = req.query;
+    const { userId } = req.query;
 
     let isFollowing = false;
     let followRequested = false;
@@ -252,7 +254,7 @@ export const relations: IControllerArgs = async (req, res) => {
     // Does follow
     isFollowing = (await Following.findOne({
       userId: id,
-      "user.id": remoteId,
+      "user.id": userId,
     }))
       ? true
       : false;
@@ -260,7 +262,7 @@ export const relations: IControllerArgs = async (req, res) => {
     // Has follow requested
     if (!isFollowing) {
       followRequested = (await FollowRequests.findOne({
-        to: remoteId,
+        to: userId,
       }))
         ? true
         : false;
@@ -269,7 +271,7 @@ export const relations: IControllerArgs = async (req, res) => {
     // Is Friend
     isFriend = (await Friends.findOne({
       userId: id,
-      "user.id": remoteId,
+      "user.id": userId,
     }))
       ? true
       : false;
@@ -277,7 +279,7 @@ export const relations: IControllerArgs = async (req, res) => {
     // Has friend requested
     if (!isFriend) {
       friendRequested = (await FriendRequests.findOne({
-        to: remoteId,
+        to: userId,
       }))
         ? true
         : false;
@@ -293,6 +295,6 @@ export const relations: IControllerArgs = async (req, res) => {
     console.log("Error verifying user", error);
     return res
       .status(400)
-      .json({ data: null, error: "Unexpected error occured" });
+      .json({ data: null, error: "An unexpected error occured" });
   }
 };

@@ -18,7 +18,7 @@ const auth: IControllerArgs = async (req, res, next) => {
     req.token = token;
     next && next();
   } catch (error) {
-    return res.status(401).send({ data: null, error: "Invalid token!" });
+    return res.json({ data: null, error: "Invalid token!" });
   }
 };
 

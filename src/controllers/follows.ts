@@ -7,9 +7,9 @@ import { IControllerArgs } from "../types";
 export const request: IControllerArgs = async (req, res) => {
   try {
     const data = await req.body;
-    const { me, remoteId } = data;
+    const { me, userId } = data;
 
-    await FollowRequests.create({ to: remoteId, from: me });
+    await FollowRequests.create({ to: userId, from: me });
 
     return res.json({
       data: "Success",
@@ -125,21 +125,21 @@ export const follow: IControllerArgs = async (req, res) => {
 
 export const unfollow: IControllerArgs = async (req, res) => {
   try {
-    const { remoteId } = await req.query;
+    const { userId } = await req.query;
     const myId = req.user.id;
 
     // Me
-    await Following.findOneAndDelete({ userId: myId, "user.id": remoteId });
+    await Following.findOneAndDelete({ userId: myId, "user.id": userId });
     await User.findByIdAndUpdate(myId, {
       $inc: { following: -1 },
     });
 
     // Remote
     await Followers.findOneAndDelete({
-      userId: remoteId,
+      userId,
       "user.id": myId,
     });
-    await User.findByIdAndUpdate(remoteId, {
+    await User.findByIdAndUpdate(userId, {
       $inc: { followers: -1 },
     });
 
@@ -157,21 +157,21 @@ export const unfollow: IControllerArgs = async (req, res) => {
 
 export const remove: IControllerArgs = async (req, res) => {
   try {
-    const { remoteId } = await req.query;
+    const { userId } = await req.query;
     const myId = req.user.id;
 
     // Me
-    await Followers.findOneAndDelete({ userId: myId, "user.id": remoteId });
+    await Followers.findOneAndDelete({ userId: myId, "user.id": userId });
     await User.findByIdAndUpdate(myId, {
       $inc: { followers: -1 },
     });
 
     // Remote
     await Following.findOneAndDelete({
-      userId: remoteId,
+      userId,
       "user.id": myId,
     });
-    await User.findByIdAndUpdate(remoteId, {
+    await User.findByIdAndUpdate(userId, {
       $inc: { following: -1 },
     });
     return res.json({

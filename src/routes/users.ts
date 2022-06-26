@@ -18,16 +18,16 @@ const router = Router();
 router.post("/authenticate", authenticate);
 router.post("/signup", signup);
 router.post("/signout", auth, signout);
-router.post("/:id/verify", verify);
+router.post("/user/:id/verify", verify);
 router.post("/code/resend", resend);
 
 // put
 router.put("/update", auth, update);
 
 // get
-router.get("/search", search);
-router.get("/:id", getUser);
+router.get("/search", auth, search);
 router.get("/me", auth, getMe);
-router.get("/:id/relations", auth, relations);
+router.get("/relations", auth, relations);
+router.get("/user/:id", getUser);
 
 export default router;
