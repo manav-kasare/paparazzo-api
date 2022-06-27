@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import Followers from "../models/followers";
 import Following from "../models/following";
 import FollowRequests from "../models/followRequests";
-import FriendRequests from "../models/friendRequets";
+import FriendRequests from "../models/friendRequests";
 import Friends from "../models/friends";
 import User from "../models/user";
 import config from "../services/config";
@@ -245,7 +246,7 @@ export const relations: IControllerArgs = async (req, res) => {
   try {
     const { id } = req.user;
     const { userId } = req.query;
-
+    console.log("id", "userId", id, userId);
     let isFollowing = false;
     let followRequested = false;
     let isFriend = false;
@@ -253,8 +254,8 @@ export const relations: IControllerArgs = async (req, res) => {
 
     // Does follow
     isFollowing = (await Following.findOne({
-      userId: id,
-      "user.id": userId,
+      userId,
+      "user.id": id,
     }))
       ? true
       : false;
@@ -270,8 +271,7 @@ export const relations: IControllerArgs = async (req, res) => {
 
     // Is Friend
     isFriend = (await Friends.findOne({
-      userId: id,
-      "user.id": userId,
+      $and: [{ ids: { $in: id } }, { ids: { $in: userId } }],
     }))
       ? true
       : false;
