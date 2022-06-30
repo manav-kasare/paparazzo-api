@@ -253,7 +253,7 @@ export const relations: IControllerArgs = async (req, res) => {
     let friendRequested = false;
 
     // Does follow
-    isFollowing = (await Following.findOne({
+    isFollowing = (await Followers.findOne({
       userId,
       "user.id": id,
     }))

@@ -7,6 +7,7 @@ import {
   remove,
   friends,
   getRequest,
+  requests,
 } from "../controllers/friends";
 import auth from "../middlewares/auth";
 const router = Router();
@@ -20,6 +21,7 @@ router.post("/remove", auth, remove);
 
 // get
 router.get("/", auth, friends);
-router.get("/requests", auth, getRequest);
+router.get("/request", auth, getRequest);
+router.get("/requests", auth, requests);
 
 export default router;

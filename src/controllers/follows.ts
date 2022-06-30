@@ -71,7 +71,7 @@ export const accept: IControllerArgs = async (req, res) => {
     await FollowRequests.findByIdAndDelete(id);
 
     return res.json({
-      data: "Success",
+      data: { userId: me.id, user: remote },
       error: null,
     });
   } catch (error: any) {
